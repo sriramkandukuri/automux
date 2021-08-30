@@ -27,8 +27,8 @@ _automux_prerr()
 
 _automux_chkrename_pane()
 {
-    local curname=$(tmux list-panes -F "#P:#T"|grep "^${CURPANENUM}:"|cut -d":" -f2-)
-    _automux_prdbg "Renaming \"$curname\" to \"$CURPANENAME\""
+    local curname=$(tmux list-panes -s -F "#S:#W.#P:#T"|grep "^${CURPANEID}:"|cut -d":" -f3-)
+    _automux_prdbg "For ${CURPANEID} Renaming \"$curname\" to \"$CURPANENAME\""
     if [ "$curname" != "$CURPANENAME" ]
     then
         tmux select-pane $CURPANE -T $CURPANENAME
@@ -49,29 +49,50 @@ _automux_validate()
         _automux_prerr "Only one pane is expected to run automux initially" 1
         return -1
     fi
+    local panes_count_1=$(echo $PANES|tr " " "\n"|sort|wc -l)
+    local panes_count_2=$(echo $PANES|tr " " "\n"|sort -u|wc -l)
+    if [ $panes_count_2 != $panes_count_1 ]; then
+        _automux_prerr "Duplicate pane names not allowed" 1
+        return -1
+    fi
     return 0
-}
-
-_automux_wincfg()
-{
-    tmux rename-window $WINNAME
 }
 
 _automux_panescfg()
 {
+    local pcount=1
+    local wcount=1
+    local winname=""
+    if [ $MAX_PANES_PER_WINDOW -gt 0 ]; then
+        winname="${WINNAME}_${wcount}"
+    else
+        winname="${WINNAME}"
+    fi
+    export CONSOLE_id=$SNAME:$winname.$pcount
+    tmux rename-window $winname
     tmux select-pane -T ${WINNAME}_CONSOLE
     for i in $PANES
     do
         _automux_prdbg "Opening pane with name $i"
-        tmux split-window
-        tmux select-pane -T $i
-        tmux select-layout tiled
+        if [ $pcount == $MAX_PANES_PER_WINDOW ]; then
+            pcount=1
+            wcount=`expr $wcount + 1`
+            winname=${WINNAME}_$wcount
+            tmux new-window -n $winname
+            tmux select-pane -T $i
+        else
+            pcount=`expr $pcount + 1`
+            tmux split-window
+            tmux select-pane -T $i
+            tmux select-layout tiled
+        fi
+        local tmp="${i}_id"
+        export "${tmp}=$SNAME:$winname.$pcount"
+        export PANES_LIST="$tmp $PANES_LIST"
+        _automux_prdbg "$tmp $(printenv $tmp)"
+        _automux_prdbg "$PANES_LIST"
     done
-    for i in $(tmux list-panes -F "#T_id=#P")
-    do
-        export "$i"
-    done
-    tmux select-pane -t 1
+    tmux select-pane -t $CONSOLE_id
 }
 
 #H ## Usage
@@ -105,11 +126,13 @@ automux_on()
     
     local pane="${1}_id"
     local paneid=$(printenv $pane)
+    _automux_prdbg "Pane id is $paneid"
 
     if [ "$paneid" != "" ]
     then
-        export CURPANE="-t $PFX.$paneid"
-        export CURPANENUM="$paneid"
+        export CURPANEID="$paneid"
+        export CURPANE="-t $paneid"
+        export CURPANENUM=$(echo $paneid | cut -d"." -f2)
         export CURPANENAME="$1"
     else
         _automux_prerr "Pane name invalid"
@@ -141,7 +164,6 @@ automux_exec_wait()
     export CURSLEEP=$1
     shift
     automux_exec "$@"
-    _automux_postexec
 }
 
 #H ### automux_exec_expect
@@ -197,7 +219,6 @@ automux_exec_wait_out()
     export CURSLEEP=$1
     shift
     automux_exec_out "$@"
-    _automux_postexec
 }
 
 #H ### automux_init
@@ -205,12 +226,11 @@ automux_exec_wait_out()
 #H Very first function to call to enable automux infra
 automux_init()
 {
-    SNAME=$(tmux display-message -p "#S")
+    export SNAME=$(tmux display-message -p "#S")
     if [ "$WINNAME" == "" ]
     then
         export WINNAME="AUTOMUX"
     fi
-    export PFX="$SNAME:$WINNAME"
     if [ "$DEF_SLEEP" == "" ]
     then
         export DEF_SLEEP=1
@@ -218,7 +238,6 @@ automux_init()
     export CURSLEEP=$DEF_SLEEP
 
     _automux_validate || exit -1
-    _automux_wincfg
     _automux_panescfg
     export AUTOMUX_LOADED=1
     export AUTOMUX_TEMPFILE=$(mktemp)
@@ -230,5 +249,10 @@ automux_init()
 automux_clean()
 {
     rm -rf $AUTOMUX_TEMPFILE
-    tmux kill-pane -a
+    for i in $PANES_LIST
+    do
+        _automux_prdbg "$i $(printenv $i)"
+        tmux kill-pane -t $(printenv $i)
+    done
+    export PANES_LIST=""
 }
