@@ -103,13 +103,13 @@ automux_on()
         return -1
     fi
     
-    local var="${1}_id"
-    var=$(printenv $var)
+    local pane="${1}_id"
+    local paneid=$(printenv $pane)
 
-    if [ "$var" != "" ]
+    if [ "$paneid" != "" ]
     then
-        export CURPANE="-t $PFX.$var"
-        export CURPANENUM="$var"
+        export CURPANE="-t $PFX.$paneid"
+        export CURPANENUM="$paneid"
         export CURPANENAME="$1"
     else
         _automux_prerr "Pane name invalid"
@@ -210,7 +210,7 @@ automux_init()
     then
         export WINNAME="AUTOMUX"
     fi
-    PFX="$SNAME:$WINNAME"
+    export PFX="$SNAME:$WINNAME"
     if [ "$DEF_SLEEP" == "" ]
     then
         export DEF_SLEEP=1
