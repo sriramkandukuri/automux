@@ -14,7 +14,7 @@ _automux_print()
 
 _automux_prdbg()
 {
-    if [ "$AUTOMUX_DEBUG" = "Y" ]
+    if [ "$AUTOMUX_DEBUG" == "Y" ]
     then
         _automux_print DBG "$@"
     fi
@@ -87,7 +87,7 @@ _automux_panescfg()
             tmux select-pane -T $_atmx_iter
             tmux select-layout tiled
         fi
-        local tmp="${i}_id"
+        local tmp="${_atmx_iter}_id"
         export "${tmp}=$SNAME:$winname.$pcount"
         export PANES_LIST="$tmp $PANES_LIST"
         _automux_prdbg "$tmp $(printenv $tmp)"
@@ -240,6 +240,9 @@ automux_init()
         export DEF_SLEEP=1
     fi
     export CURSLEEP=$DEF_SLEEP
+    if [ "$MAX_PANES_PER_WINDOW" == "" ]; then
+        export MAX_PANES_PER_WINDOW=0 
+    fi
 
     _automux_validate || exit -1
     _automux_panescfg
