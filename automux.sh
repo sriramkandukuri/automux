@@ -71,19 +71,20 @@ _automux_panescfg()
     export CONSOLE_id=$SNAME:$winname.$pcount
     tmux rename-window $winname
     tmux select-pane -T ${WINNAME}_CONSOLE
-    for i in $PANES
+    local _atmx_iter=""
+    for _atmx_iter in $PANES
     do
-        _automux_prdbg "Opening pane with name $i"
+        _automux_prdbg "Opening pane with name $_atmx_iter"
         if [ $pcount == $MAX_PANES_PER_WINDOW ]; then
             pcount=1
             wcount=`expr $wcount + 1`
             winname=${WINNAME}_$wcount
             tmux new-window -n $winname
-            tmux select-pane -T $i
+            tmux select-pane -T $_atmx_iter
         else
             pcount=`expr $pcount + 1`
             tmux split-window
-            tmux select-pane -T $i
+            tmux select-pane -T $_atmx_iter
             tmux select-layout tiled
         fi
         local tmp="${i}_id"
@@ -146,9 +147,10 @@ automux_on()
 #H execute given commands on selected pane using automux_on
 automux_exec()
 {
-    for i in "$@"
+    local _atmx_iter=""
+    for _atmx_iter in "$@"
     do
-        tmux send-keys $CURPANE "$i" Enter
+        tmux send-keys $CURPANE "$_atmx_iter" Enter
         sleep $CURSLEEP
     done
     _automux_postexec
@@ -176,10 +178,11 @@ automux_exec_expect()
     local expstr="$1"
     local obtstr=""
     shift
-    for i in "$@"
+    local _atmx_iter=""
+    for _atmx_iter in "$@"
     do
         tmux pipe-pane $CURPANE "cat >> $AUTOMUX_TEMPFILE"
-        tmux send-keys $CURPANE "$i" Enter
+        tmux send-keys $CURPANE "$_atmx_iter" Enter
         obtstr=""
         while [ "$obtstr" != "$expstr" ]
         do
@@ -197,16 +200,17 @@ automux_exec_expect()
 #H execute given commands on selected pane using automux_on and dumps output on console
 automux_exec_out()
 {
-    for i in "$@"
+    local _atmx_iter=""
+    for _atmx_iter in "$@"
     do
         tmux pipe-pane $CURPANE "cat >> $AUTOMUX_TEMPFILE"
-        tmux send-keys $CURPANE "$i" Enter
+        tmux send-keys $CURPANE "$_atmx_iter" Enter
         sleep $CURSLEEP
         tmux pipe-pane $CURPANE
-        cat $AUTOMUX_TEMPFILE
-        echo -ne > $AUTOMUX_TEMPFILE
     done
     _automux_postexec
+    cat $AUTOMUX_TEMPFILE
+    echo -ne > $AUTOMUX_TEMPFILE
 }
 
 #H ### automux_exec_wait_out
@@ -249,10 +253,11 @@ automux_init()
 automux_clean()
 {
     rm -rf $AUTOMUX_TEMPFILE
-    for i in $PANES_LIST
+    local _atmx_iter=""
+    for _atmx_iter in $PANES_LIST
     do
-        _automux_prdbg "$i $(printenv $i)"
-        tmux kill-pane -t $(printenv $i)
+        _automux_prdbg "$_atmx_iter $(printenv $_atmx_iter)"
+        tmux kill-pane -t $(printenv $_atmx_iter)
     done
     export PANES_LIST=""
 }
