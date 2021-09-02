@@ -184,6 +184,9 @@ automux_on()
 #H ### automux_exec
 #H
 #H execute given commands on selected pane using automux_on
+#H
+#H > Params
+#H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec()
 {
     local _atmx_iter=""
@@ -201,6 +204,7 @@ automux_exec()
 #H
 #H > Params
 #H > - $1 is seconds to wait till the command completes
+#H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_wait()
 {
     export CURSLEEP=$1
@@ -214,6 +218,7 @@ automux_exec_wait()
 #H
 #H > Params
 #H > - $1 is expect string we wait till it founds on selected pane
+#H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect()
 {
     local expstr="$1"
@@ -239,6 +244,9 @@ automux_exec_expect()
 #H ### automux_exec_out
 #H
 #H execute given commands on selected pane using automux_on and dumps output on console
+#H
+#H > Params
+#H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_out()
 {
     local _atmx_iter=""
@@ -260,6 +268,7 @@ automux_exec_out()
 #H
 #H > Params
 #H > - $1 sleep between every command
+#H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_wait_out()
 {
     export CURSLEEP=$1

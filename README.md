@@ -47,12 +47,16 @@ Use this function to change effective pane to execute all following automux func
 
 execute given commands on selected pane using automux_on
 
+> Params
+> - Command(s) to execute seperated as strings refer test.sh 
+
 ### automux_exec_wait
 
 execute given commands on selected pane using automux_on
 
 > Params
 > - $1 is seconds to wait till the command completes
+> - Command(s) to execute seperated as strings refer test.sh 
 
 ### automux_exec_expect
 
@@ -60,10 +64,14 @@ execute given commands on selected pane using automux_on
 
 > Params
 > - $1 is expect string we wait till it founds on selected pane
+> - Command(s) to execute seperated as strings refer test.sh 
 
 ### automux_exec_out
 
 execute given commands on selected pane using automux_on and dumps output on console
+
+> Params
+> - Command(s) to execute seperated as strings refer test.sh 
 
 ### automux_exec_wait_out
 
@@ -71,3 +79,4 @@ execute given commands on selected pane using automux_on and dumps output on con
 
 > Params
 > - $1 sleep between every command
+> - Command(s) to execute seperated as strings refer test.sh 
