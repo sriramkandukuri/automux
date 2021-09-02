@@ -25,19 +25,8 @@ _automux_prerr()
     _automux_print ERR "$@"
 }
 
-_automux_chkrename_pane()
-{
-    local curname=$(tmux list-panes -s -F "#S:#W.#P:#T"|grep "^${CURPANEID}:"|cut -d":" -f3-)
-    _automux_prdbg "For ${CURPANEID} Renaming \"$curname\" to \"$CURPANENAME\""
-    if [ "$curname" != "$CURPANENAME" ]
-    then
-        tmux select-pane $CURPANE -T $CURPANENAME
-    fi
-}
-
 _automux_postexec()
 {
-    _automux_chkrename_pane
     export CURSLEEP=$DEF_SLEEP
 }
 
@@ -70,7 +59,8 @@ _automux_panescfg()
     fi
     export CONSOLE_id=$SNAME:$winname.$pcount
     tmux rename-window $winname
-    tmux select-pane -T ${WINNAME}_CONSOLE
+    tmux setw pane-border-format "[#{@automux-panename} #P]"
+    tmux set -p @automux-panename ${WINNAME}_CONSOLE
     local _atmx_iter=""
     for _atmx_iter in $PANES
     do
@@ -80,13 +70,13 @@ _automux_panescfg()
             wcount=`expr $wcount + 1`
             winname=${WINNAME}_$wcount
             tmux new-window -n $winname
-            tmux select-pane -T $_atmx_iter
+            tmux setw pane-border-format "[#{@automux-panename} #P]"
         else
             pcount=`expr $pcount + 1`
             tmux split-window
-            tmux select-pane -T $_atmx_iter
             tmux select-layout tiled
         fi
+        tmux set -p @automux-panename "$_atmx_iter"
         local tmp="${_atmx_iter}_id"
         export "${tmp}=$SNAME:$winname.$pcount"
         export PANES_LIST="$tmp $PANES_LIST"
@@ -108,15 +98,62 @@ _automux_panescfg()
 #H ```
 #H
 #H Start using provided functions as per the need. All exec functions support multiple commands to 
-#H execute on a pane
+#H execute on a pane, take test.sh as a reference
 
-#H ## Automux functions
+#H ## Automux Onetime functions
+
+#H ### automux_init
+#H
+#H Very first function to call to enable automux infra and dont use it multiple times.
+#H If you have multiple scripts to execute using this have a init script with this function
+#H and source it, then you can use all scripts. its mandatory to source automux.sh in all scripts.
+automux_init()
+{
+    export SNAME=$(tmux display-message -p "#S")
+    if [ "$WINNAME" == "" ]
+    then
+        export WINNAME="AUTOMUX"
+    fi
+    if [ "$DEF_SLEEP" == "" ]
+    then
+        export DEF_SLEEP=1
+    fi
+    export CURSLEEP=$DEF_SLEEP
+    if [ "$MAX_PANES_PER_WINDOW" == "" ]; then
+        export MAX_PANES_PER_WINDOW=0 
+    fi
+
+    _automux_validate || exit -1
+    _automux_panescfg
+    export AUTOMUX_LOADED=1
+    export AUTOMUX_TEMPFILE=$(mktemp)
+}
+
+#H ### automux_clean
+#H
+#H Closes all opened panes, cleans all temporary files created by automux, run this after 
+#H completing everything. As it closes every pane abruptly, close all open connections in panes
+#H before calling this function
+automux_clean()
+{
+    rm -rf $AUTOMUX_TEMPFILE
+    local _atmx_iter=""
+    for _atmx_iter in $PANES_LIST
+    do
+        _automux_prdbg "$_atmx_iter $(printenv $_atmx_iter)"
+        tmux kill-pane -t $(printenv $_atmx_iter)
+    done
+    export PANES_LIST=""
+}
+
+#H ## Automux select pane functions
 
 #H ### automux_on
 #H
 #H Use this function to change effective pane to execute all following automux functions
 #H
-#H $1 - pane name this should be the one from config PANES
+#H > Params
+#H > - $1 - pane name this should be the one from config PANES
 automux_on()
 {
     if [ "$1" == "" ] 
@@ -142,6 +179,8 @@ automux_on()
     _automux_prdbg "$CURPANE"
 }
 
+#H ## Automux command executor functions
+
 #H ### automux_exec
 #H
 #H execute given commands on selected pane using automux_on
@@ -160,7 +199,8 @@ automux_exec()
 #H
 #H execute given commands on selected pane using automux_on
 #H
-#H $1 is seconds to wait till the command completes
+#H > Params
+#H > - $1 is seconds to wait till the command completes
 automux_exec_wait()
 {
     export CURSLEEP=$1
@@ -172,7 +212,8 @@ automux_exec_wait()
 #H
 #H execute given commands on selected pane using automux_on
 #H
-#H $1 is expect string we wait till it founds on selected pane
+#H > Params
+#H > - $1 is expect string we wait till it founds on selected pane
 automux_exec_expect()
 {
     local expstr="$1"
@@ -217,50 +258,11 @@ automux_exec_out()
 #H
 #H execute given commands on selected pane using automux_on and dumps output on console
 #H
-#H $1 sleep between every command
+#H > Params
+#H > - $1 sleep between every command
 automux_exec_wait_out()
 {
     export CURSLEEP=$1
     shift
     automux_exec_out "$@"
-}
-
-#H ### automux_init
-#H
-#H Very first function to call to enable automux infra
-automux_init()
-{
-    export SNAME=$(tmux display-message -p "#S")
-    if [ "$WINNAME" == "" ]
-    then
-        export WINNAME="AUTOMUX"
-    fi
-    if [ "$DEF_SLEEP" == "" ]
-    then
-        export DEF_SLEEP=1
-    fi
-    export CURSLEEP=$DEF_SLEEP
-    if [ "$MAX_PANES_PER_WINDOW" == "" ]; then
-        export MAX_PANES_PER_WINDOW=0 
-    fi
-
-    _automux_validate || exit -1
-    _automux_panescfg
-    export AUTOMUX_LOADED=1
-    export AUTOMUX_TEMPFILE=$(mktemp)
-}
-
-#H ### automux_clean
-#H
-#H cleans all temporary files created by automux, run this after completing everything
-automux_clean()
-{
-    rm -rf $AUTOMUX_TEMPFILE
-    local _atmx_iter=""
-    for _atmx_iter in $PANES_LIST
-    do
-        _automux_prdbg "$_atmx_iter $(printenv $_atmx_iter)"
-        tmux kill-pane -t $(printenv $_atmx_iter)
-    done
-    export PANES_LIST=""
 }

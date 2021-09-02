@@ -1,100 +1,73 @@
 
 # Introduction
 
-
-
 Automation tool using tmux and panes. Wrapper to some of the tmux commands to make simple 
-
 automation scripts refer test.sh in this repo for reference.
 
 ## Usage
 
-
-
 Prepare a config file taking ./testsetup.cfg as reference. Set all mandatory values there.
-
 Then use below steps in your scripts
 
 
-
-
-
 ```
-
 source <configfile>
-
 source <automux.sh>
-
 ```
-
-
 
 Start using provided functions as per the need. All exec functions support multiple commands to 
+execute on a pane, take test.sh as a reference
 
-execute on a pane
+## Automux Onetime functions
 
-## Automux functions
+### automux_init
+
+Very first function to call to enable automux infra and dont use it multiple times.
+If you have multiple scripts to execute using this have a init script with this function
+and source it, then you can use all scripts. its mandatory to source automux.sh in all scripts.
+
+### automux_clean
+
+Closes all opened panes, cleans all temporary files created by automux, run this after 
+completing everything. As it closes every pane abruptly, close all open connections in panes
+before calling this function
+
+## Automux select pane functions
 
 ### automux_on
 
-
-
 Use this function to change effective pane to execute all following automux functions
 
+> Params
+> - $1 - pane name this should be the one from config PANES
 
+## Automux command executor functions
 
-$1 - pane name this should be the one from config PANES
-
-### automux_exec()
-
-
-
-execute given commands on selected pane using automux_on
-
-### automux_exec_wait()
-
-
+### automux_exec
 
 execute given commands on selected pane using automux_on
 
+### automux_exec_wait
 
+execute given commands on selected pane using automux_on
 
-$1 is seconds to wait till the command completes
+> Params
+> - $1 is seconds to wait till the command completes
 
 ### automux_exec_expect
 
-
-
 execute given commands on selected pane using automux_on
 
-
-
-$1 is expect string we wait till it founds on selected pane
+> Params
+> - $1 is expect string we wait till it founds on selected pane
 
 ### automux_exec_out
-
-
 
 execute given commands on selected pane using automux_on and dumps output on console
 
 ### automux_exec_wait_out
 
-
-
 execute given commands on selected pane using automux_on and dumps output on console
 
-
-
-$1 sleep between every command
-
-### automux_init
-
-
-
-Very first function to call to enable automux infra
-
-### automux_clean
-
-
-
-cleans all temporary files created by automux, run this after completing everything
+> Params
+> - $1 sleep between every command
