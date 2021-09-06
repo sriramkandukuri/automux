@@ -233,7 +233,6 @@ automux_exec_expect()
         while [ "$obtstr" != "$expstr" ]
         do
             obtstr=$(cat $AUTOMUX_TEMPFILE|tail -1)
-            sleep $DEF_SLEEP
         done
         tmux pipe-pane $CURPANE
         echo -ne > $AUTOMUX_TEMPFILE
