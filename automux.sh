@@ -212,9 +212,42 @@ automux_exec_wait()
     automux_exec "$@"
 }
 
+#H ### automux_exec_expect_prompt
+#H
+#H execute given commands on selected pane using automux_on and checks for prompt
+#H
+#H > Params
+#H > - Command(s) to execute seperated as strings refer test.sh 
+automux_exec_expect_prompt()
+{
+    local expstr=""
+    local obtstr=""
+    local _atmx_iter=""
+    for _atmx_iter in "$@"
+    do
+        echo $AUTOMUX_TEMPFILE
+        echo $CURPANE
+        tmux pipe-pane $CURPANE "cat >> $AUTOMUX_TEMPFILE"
+        tmux send-keys $CURPANE Enter
+        sleep 1 
+        expstr=$(cat $AUTOMUX_TEMPFILE|tail -1)
+        tmux send-keys $CURPANE "$_atmx_iter" Enter
+        obtstr=""
+        sleep 1
+        while [ "$obtstr" != "$expstr" ]
+        do
+            obtstr=$(cat $AUTOMUX_TEMPFILE|tail -1)
+        done
+        tmux pipe-pane $CURPANE
+        echo -ne > $AUTOMUX_TEMPFILE
+    done
+    _automux_postexec
+}
+
 #H ### automux_exec_expect
 #H
-#H execute given commands on selected pane using automux_on
+#H execute given commands on selected pane using automux_on and waits untill expected string is 
+#H obtained
 #H
 #H > Params
 #H > - $1 is expect string we wait till it founds on selected pane
@@ -229,6 +262,7 @@ automux_exec_expect()
     do
         tmux pipe-pane $CURPANE "cat >> $AUTOMUX_TEMPFILE"
         tmux send-keys $CURPANE "$_atmx_iter" Enter
+        sleep $DEF_SLEEP
         obtstr=""
         while [ "$obtstr" != "$expstr" ]
         do
