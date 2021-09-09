@@ -58,9 +58,17 @@ execute given commands on selected pane using automux_on
 > - $1 is seconds to wait till the command completes
 > - Command(s) to execute seperated as strings refer test.sh 
 
+### automux_exec_expect_prompt
+
+execute given commands on selected pane using automux_on and checks for prompt
+
+> Params
+> - Command(s) to execute seperated as strings refer test.sh 
+
 ### automux_exec_expect
 
-execute given commands on selected pane using automux_on
+execute given commands on selected pane using automux_on and waits untill expected string is 
+obtained
 
 > Params
 > - $1 is expect string we wait till it founds on selected pane
