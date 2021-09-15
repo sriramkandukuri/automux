@@ -88,3 +88,11 @@ execute given commands on selected pane using automux_on and dumps output on con
 > Params
 > - $1 sleep between every command
 > - Command(s) to execute seperated as strings refer test.sh 
+
+### automux_bt_exec_***
+
+Similar to all exec commands but executes in background
+Becarefull while exiting without waiting all invoked bg tasks.
+
+> Params
+> - Command(s) to poss to respective exec functions. refert test.sh 

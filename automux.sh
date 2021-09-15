@@ -136,7 +136,7 @@ automux_init()
 #H before calling this function
 automux_clean()
 {
-    rm -rf $AUTOMUX_TEMPFILE
+    rm -rf /tmp/automux_* 
     local _atmx_iter=""
     for _atmx_iter in $PANES_LIST
     do
@@ -189,11 +189,13 @@ automux_on()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec()
 {
+    local curpane=$CURPANE
+    local cursleep=$CURSLEEP
     local _atmx_iter=""
     for _atmx_iter in "$@"
     do
-        tmux send-keys $CURPANE "$_atmx_iter" Enter
-        sleep $CURSLEEP
+        tmux send-keys $curpane "$_atmx_iter" Enter
+        sleep $cursleep
     done
     _automux_postexec
 }
@@ -220,26 +222,28 @@ automux_exec_wait()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect_prompt()
 {
+    local curpane=$CURPANE
+    local cursleep=$CURSLEEP
+    local curpname=$CURPANENAME
+    local tmpf=$(mktemp -t "automux_${curpname}_XXXXXX")
     local expstr=""
     local obtstr=""
     local _atmx_iter=""
     for _atmx_iter in "$@"
     do
-        echo $AUTOMUX_TEMPFILE
-        echo $CURPANE
-        tmux pipe-pane $CURPANE "cat >> $AUTOMUX_TEMPFILE"
-        tmux send-keys $CURPANE Enter
+        tmux pipe-pane $curpane "cat >> $tmpf"
+        tmux send-keys $curpane Enter
         sleep 1 
-        expstr=$(cat $AUTOMUX_TEMPFILE|tail -1)
-        tmux send-keys $CURPANE "$_atmx_iter" Enter
+        expstr=$(cat $tmpf|tail -1)
+        tmux send-keys $curpane "$_atmx_iter" Enter
         obtstr=""
         sleep 1
         while [ "$obtstr" != "$expstr" ]
         do
-            obtstr=$(cat $AUTOMUX_TEMPFILE|tail -1)
+            obtstr=$(cat $tmpf|tail -1)
         done
-        tmux pipe-pane $CURPANE
-        echo -ne > $AUTOMUX_TEMPFILE
+        tmux pipe-pane $curpane
+        echo -ne > $tmpf
     done
     _automux_postexec
 }
@@ -254,22 +258,26 @@ automux_exec_expect_prompt()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect()
 {
+    local curpane=$CURPANE
+    local cursleep=$CURSLEEP
     local expstr="$1"
     local obtstr=""
     shift
     local _atmx_iter=""
+    local curpname=$CURPANENAME
+    local tmpf=$(mktemp -t "automux_${curpname}_XXXXXX")
     for _atmx_iter in "$@"
     do
-        tmux pipe-pane $CURPANE "cat >> $AUTOMUX_TEMPFILE"
-        tmux send-keys $CURPANE "$_atmx_iter" Enter
+        tmux pipe-pane $curpane "cat >> $tmpf"
+        tmux send-keys $curpane "$_atmx_iter" Enter
         sleep $DEF_SLEEP
         obtstr=""
         while [ "$obtstr" != "$expstr" ]
         do
-            obtstr=$(cat $AUTOMUX_TEMPFILE|tail -1)
+            obtstr=$(cat $tmpf|tail -1)
         done
-        tmux pipe-pane $CURPANE
-        echo -ne > $AUTOMUX_TEMPFILE
+        tmux pipe-pane $curpane
+        echo -ne > $tmpf
     done
     _automux_postexec
 }
@@ -282,17 +290,21 @@ automux_exec_expect()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_out()
 {
+    local curpane=$CURPANE
+    local cursleep=$CURSLEEP
     local _atmx_iter=""
+    local curpname=$CURPANENAME
+    local tmpf=$(mktemp -t "automux_${curpname}_XXXXXX")
     for _atmx_iter in "$@"
     do
-        tmux pipe-pane $CURPANE "cat >> $AUTOMUX_TEMPFILE"
-        tmux send-keys $CURPANE "$_atmx_iter" Enter
-        sleep $CURSLEEP
-        tmux pipe-pane $CURPANE
+        tmux pipe-pane $curpane "cat >> $tmpf"
+        tmux send-keys $curpane "$_atmx_iter" Enter
+        sleep $cursleep
+        tmux pipe-pane $curpane
     done
     _automux_postexec
-    cat $AUTOMUX_TEMPFILE
-    echo -ne > $AUTOMUX_TEMPFILE
+    cat $tmpf
+    echo -ne > $tmpf
 }
 
 #H ### automux_exec_wait_out
@@ -307,4 +319,36 @@ automux_exec_wait_out()
     export CURSLEEP=$1
     shift
     automux_exec_out "$@"
+}
+
+#H ### automux_bt_exec_***
+#H
+#H Similar to all exec commands but executes in background
+#H Becarefull while exiting without waiting all invoked bg tasks.
+#H
+#H > Params
+#H > - Command(s) to poss to respective exec functions. refert test.sh 
+automux_bg_exec()
+{
+    automux_exec "$@" &
+}
+automux_bg_exec_wait()
+{ 
+    automux_exec_wait "$@" &
+}
+automux_bg_exec_expect_prompt()
+{ 
+    automux_exec_expect_prompt "$@" &
+}
+automux_bg_exec_expect()
+{ 
+    automux_exec_expect "$@" &
+}
+automux_bg_exec_out()
+{
+    automux_exec_out "$@" &
+}
+automux_bg_exec_wait_out()
+{
+    automux_exec_wait_out "$@" &
 }
