@@ -321,7 +321,7 @@ automux_exec_wait_out()
     automux_exec_out "$@"
 }
 
-#H ### automux_bt_exec_***
+#H ### automux_bg_exec_***
 #H
 #H Similar to all exec commands but executes in background
 #H Becarefull while exiting without waiting all invoked bg tasks.
