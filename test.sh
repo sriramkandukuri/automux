@@ -28,7 +28,19 @@ automux_bg_exec_wait 2 \
     "echo TEST2 OK" \
     "echo TEST3 OK"
 automux_on P5
-automux_bg_exec_expect "\$ " \
+automux_bg_exec_expect_prompt \
+    "rnp sri" \
+    "echo TEST1 OK" \
+    "echo TEST2 OK" \
+    "echo TEST3 OK"
+automux_on P6
+automux_bg_exec_expect_out "\$ " \
+    "rnp sri" \
+    "echo TEST1 OK" \
+    "echo TEST2 OK" \
+    "echo TEST3 OK"
+automux_on P6
+automux_bg_exec_expect_prompt_out \
     "rnp sri" \
     "echo TEST1 OK" \
     "echo TEST2 OK" \
@@ -89,7 +101,19 @@ automux_exec_wait 2 \
     "echo TEST2 OK" \
     "echo TEST3 OK"
 automux_on P5
-automux_exec_expect "\$ " \
+automux_exec_expect_prompt_out \
+    "rnp sri" \
+    "echo TEST1 OK" \
+    "echo TEST2 OK" \
+    "echo TEST3 OK"
+automux_on P6
+automux_exec_expect_out "\$ " \
+    "rnp sri" \
+    "echo TEST1 OK" \
+    "echo TEST2 OK" \
+    "echo TEST3 OK"
+automux_on P5
+automux_exec_expect_prompt \
     "rnp sri" \
     "echo TEST1 OK" \
     "echo TEST2 OK" \
