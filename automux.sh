@@ -224,7 +224,7 @@ _automux_exec_expect()
     shift
     local expstr=""
     local obtstr=""
-    if [ "$expprompt" = "Y" ];then
+    if [ "$expprompt" = "N" ];then
         expstr=$1
         shift
     fi
@@ -264,7 +264,7 @@ _automux_exec_expect()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect()
 {
-    _automux_exec_expect "N N $@"
+    _automux_exec_expect N N "$@"
 }
 
 #H ### automux_exec_expect_out
@@ -278,7 +278,7 @@ automux_exec_expect()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect_out()
 {
-    _automux_exec_expect "N Y $@"
+    _automux_exec_expect N Y "$@"
 }
 
 #H ### automux_exec_expect_prompt
@@ -289,7 +289,7 @@ automux_exec_expect_out()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect_prompt()
 {
-    _automux_exec_expect "Y N $@"
+    _automux_exec_expect Y N "$@"
 }
 
 #H ### automux_exec_expect_prompt_out
@@ -301,7 +301,7 @@ automux_exec_expect_prompt()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect_prompt_out()
 {
-    _automux_exec_expect "Y Y $@"
+    _automux_exec_expect Y Y "$@"
 }
 
 #H ### automux_exec_out
