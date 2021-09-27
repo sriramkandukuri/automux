@@ -47,13 +47,19 @@ _automux_validate()
     return 0
 }
 
+_automux_winprops()
+{
+    tmux setw pane-border-format "[#{@automux-panename} #P]"
+    tmux setw -g pane-base-index 1
+    tmux setw -g pane-border-status bottom
+}
+
 _automux_panescfg()
 {
     local pcount=1
     local wcount=1
     local winname=""
-    tmux setw -g pane-base-index 1
-    tmux setw -g pane-border-status bottom
+    tmux set -p @automux-panename ${WINNAME}_CONSOLE
     if [ $MAX_PANES_PER_WINDOW -gt 0 ]; then
         winname="${WINNAME}_${wcount}"
     else
@@ -61,8 +67,7 @@ _automux_panescfg()
     fi
     export CONSOLE_id=$SNAME:$winname.$pcount
     tmux rename-window $winname
-    tmux setw pane-border-format "[#{@automux-panename} #P]"
-    tmux set -p @automux-panename ${WINNAME}_CONSOLE
+    _automux_winprops
     local _atmx_iter=""
     for _atmx_iter in $PANES
     do
@@ -72,7 +77,7 @@ _automux_panescfg()
             wcount=`expr $wcount + 1`
             winname=${WINNAME}_$wcount
             tmux new-window -n $winname
-            tmux setw pane-border-format "[#{@automux-panename} #P]"
+            _automux_winprops
         else
             pcount=`expr $pcount + 1`
             tmux split-window
