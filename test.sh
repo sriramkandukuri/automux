@@ -34,12 +34,6 @@ automux_bg_exec_expect_prompt \
     "echo TEST2 OK" \
     "echo TEST3 OK"
 automux_on P6
-automux_bg_exec_expect_out "\$ " \
-    "rnp sri" \
-    "echo TEST1 OK" \
-    "echo TEST2 OK" \
-    "echo TEST3 OK"
-automux_on P6
 automux_bg_exec_expect_prompt_out \
     "rnp sri" \
     "echo TEST1 OK" \
