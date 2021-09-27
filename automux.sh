@@ -52,6 +52,8 @@ _automux_panescfg()
     local pcount=1
     local wcount=1
     local winname=""
+    tmux setw -g pane-base-index 1
+    tmux setw -g pane-border-status bottom
     if [ $MAX_PANES_PER_WINDOW -gt 0 ]; then
         winname="${WINNAME}_${wcount}"
     else
@@ -237,21 +239,21 @@ _automux_exec_expect()
         if [ "$expprompt" = "Y" ];then
             tmux send-keys $curpane Enter
             sleep 1 
-            expstr=$(cat $tmpf|tail -1)
+            expstr=$(tail -1 $tmpf|sed -e 's/\x0//g')
         fi
         tmux send-keys $curpane "$_atmx_iter" Enter
         sleep $DEF_SLEEP
         obtstr=""
         while [ "$obtstr" != "$expstr" ]
         do
-            obtstr=$(cat $tmpf|tail -1)
+            obtstr=$(tail -1 $tmpf|sed -e 's/\x0//g')
         done
     done
     if [ "$expout" = "Y" ]; then
         cat $tmpf
     fi
     tmux pipe-pane $curpane
-    echo -ne > $tmpf
+    rm -rf $tmpf
     _automux_postexec
 }
 #H ### automux_exec_expect
@@ -326,7 +328,7 @@ automux_exec_out()
     _automux_postexec
     tmux pipe-pane $curpane
     cat $tmpf
-    echo -ne > $tmpf
+    rm -rf $tmpf
 }
 
 #H ### automux_exec_wait_out
