@@ -225,33 +225,53 @@ _automux_exec_expect()
 {
     local curpane=$CURPANE
     local cursleep=$CURSLEEP
-    local expprompt=$1
-    shift
-    local expout=$1
+    local expout=""
+    local explogic=""
+    read expout explogic <<< $(echo "$1" | sed -e 's/-/ /g')
     shift
     local expstr=""
     local obtstr=""
-    if [ "$expprompt" = "N" ];then
-        expstr=$1
-        shift
-    fi
     local _atmx_iter=""
     local curpname=$CURPANENAME
     local tmpf=$(mktemp -t "automux_${curpname}_XXXXXX")
     tmux pipe-pane $curpane "cat >> $tmpf"
+    
+    if [ "$explogic" != "prompt" ];then
+        expstr=$1
+        shift
+    else
+        tmux send-keys $curpane Enter
+        sleep 1
+        expstr=$(tail -1 $tmpf|sed -e 's/\x0//g')
+    fi
+
     for _atmx_iter in "$@"
     do
-        if [ "$expprompt" = "Y" ];then
-            tmux send-keys $curpane Enter
-            sleep 1 
-            expstr=$(tail -1 $tmpf|sed -e 's/\x0//g')
-        fi
         tmux send-keys $curpane "$_atmx_iter" Enter
         sleep $DEF_SLEEP
         obtstr=""
-        while [ "$obtstr" != "$expstr" ]
+        while true
         do
             obtstr=$(tail -1 $tmpf|sed -e 's/\x0//g')
+            # uncomment below line for debugging
+            # _automux_prdbg "expstr($expstr) obtstr($obtstr)"
+            case $explogic in
+                exactend|prompt)
+                    if [ "$obtstr" = "$expstr" ]; then
+                        break
+                    fi
+                    ;;
+                substrend)
+                    if [[ "$obtstr" == *"$expstr"* ]]; then
+                        break
+                    fi
+                    ;;
+                findlog)
+                    if grep -qs "$expstr" $tmpf; then
+                        break
+                    fi
+                    ;;
+            esac
         done
     done
     if [ "$expout" = "Y" ]; then
@@ -264,20 +284,20 @@ _automux_exec_expect()
 #H ### automux_exec_expect
 #H
 #H execute given commands on selected pane using automux_on and waits untill expected string is 
-#H obtained
+#H obtained on last line of the output
 #H
 #H > Params
 #H > - $1 is expect string we wait till it founds on selected pane
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect()
 {
-    _automux_exec_expect N N "$@"
+    _automux_exec_expect N-exactend "$@"
 }
 
 #H ### automux_exec_expect_out
 #H
 #H execute given commands on selected pane using automux_on and waits untill expected string is 
-#H obtained
+#H obtained on last line of the output
 #H Also dumps output to current pane
 #H
 #H > Params
@@ -285,7 +305,7 @@ automux_exec_expect()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect_out()
 {
-    _automux_exec_expect N Y "$@"
+    _automux_exec_expect Y-exactend "$@"
 }
 
 #H ### automux_exec_expect_prompt
@@ -296,7 +316,7 @@ automux_exec_expect_out()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect_prompt()
 {
-    _automux_exec_expect Y N "$@"
+    _automux_exec_expect N-prompt "$@"
 }
 
 #H ### automux_exec_expect_prompt_out
@@ -308,7 +328,57 @@ automux_exec_expect_prompt()
 #H > - Command(s) to execute seperated as strings refer test.sh 
 automux_exec_expect_prompt_out()
 {
-    _automux_exec_expect Y Y "$@"
+    _automux_exec_expect Y-prompt "$@"
+}
+
+#H ### automux_exec_expect_substr
+#H
+#H execute given commands on selected pane using automux_on and checks for given string 
+#H is present in lastline of output
+#H
+#H > Params
+#H > - Command(s) to execute seperated as strings refer test.sh 
+automux_exec_expect_substr()
+{
+    _automux_exec_expect N-substrend "$@"
+}
+
+#H ### automux_exec_expect_substr_out
+#H
+#H execute given commands on selected pane using automux_on and checks for given string 
+#H is present in lastline of output
+#H Also dumps output to current pane
+#H
+#H > Params
+#H > - Command(s) to execute seperated as strings refer test.sh 
+automux_exec_expect_substr_out()
+{
+    _automux_exec_expect Y-substrend "$@"
+}
+
+#H ### automux_exec_findstr
+#H
+#H execute given commands on selected pane using automux_on and checks for given string 
+#H is present in lastline of output
+#H
+#H > Params
+#H > - Command(s) to execute seperated as strings refer test.sh 
+automux_exec_findstr()
+{
+    _automux_exec_expect N-findlog "$@"
+}
+
+#H ### automux_exec_findstr_out
+#H
+#H execute given commands on selected pane using automux_on and checks for given string 
+#H is present in lastline of output
+#H Also dumps output to current pane
+#H
+#H > Params
+#H > - Command(s) to execute seperated as strings refer test.sh 
+automux_exec_findstr_out()
+{
+    _automux_exec_expect Y-findlog "$@"
 }
 
 #H ### automux_exec_out
@@ -372,6 +442,22 @@ automux_bg_exec_expect_prompt_out()
 automux_bg_exec_expect_prompt()
 { 
     automux_exec_expect_prompt "$@" &
+}
+automux_bg_exec_expect_substr_out()
+{ 
+    automux_exec_expect_substr_out "$@" &
+}
+automux_bg_exec_expect_substr()
+{ 
+    automux_exec_expect_substr "$@" &
+}
+automux_bg_exec_findstr_out()
+{ 
+    automux_exec_findstr_out "$@" &
+}
+automux_bg_exec_findstr()
+{ 
+    automux_exec_findstr "$@" &
 }
 automux_bg_exec_expect_out()
 { 

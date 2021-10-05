@@ -61,7 +61,7 @@ execute given commands on selected pane using automux_on
 ### automux_exec_expect
 
 execute given commands on selected pane using automux_on and waits untill expected string is 
-obtained
+obtained on last line of the output
 
 > Params
 > - $1 is expect string we wait till it founds on selected pane
@@ -70,7 +70,7 @@ obtained
 ### automux_exec_expect_out
 
 execute given commands on selected pane using automux_on and waits untill expected string is 
-obtained
+obtained on last line of the output
 Also dumps output to current pane
 
 > Params
@@ -87,6 +87,40 @@ execute given commands on selected pane using automux_on and checks for prompt
 ### automux_exec_expect_prompt_out
 
 execute given commands on selected pane using automux_on and checks for prompt 
+Also dumps output to current pane
+
+> Params
+> - Command(s) to execute seperated as strings refer test.sh 
+
+### automux_exec_expect_substr
+
+execute given commands on selected pane using automux_on and checks for given string 
+is present in lastline of output
+
+> Params
+> - Command(s) to execute seperated as strings refer test.sh 
+
+### automux_exec_expect_substr_out
+
+execute given commands on selected pane using automux_on and checks for given string 
+is present in lastline of output
+Also dumps output to current pane
+
+> Params
+> - Command(s) to execute seperated as strings refer test.sh 
+
+### automux_exec_findstr
+
+execute given commands on selected pane using automux_on and checks for given string 
+is present in lastline of output
+
+> Params
+> - Command(s) to execute seperated as strings refer test.sh 
+
+### automux_exec_findstr_out
+
+execute given commands on selected pane using automux_on and checks for given string 
+is present in lastline of output
 Also dumps output to current pane
 
 > Params
