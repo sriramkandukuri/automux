@@ -2,8 +2,10 @@
 
 #H # Introduction
 #H
-#H Automation tool using tmux and panes. Wrapper to some of the tmux commands to make simple 
-#H automation scripts refer test.sh in this repo for reference.
+#H Automation tool using tmux and panes. Wrapper to some of the tmux commands to make
+#H automation scripts 
+#H 
+#H refer [test.sh](test.sh) for example
 
 _automux_print()
 {
@@ -95,7 +97,7 @@ _automux_panescfg()
 
 #H ## Usage
 #H
-#H Prepare a config file taking ./testsetup.cfg as reference. Set all mandatory values there.
+#H Prepare a config file taking [testsetup.cfg](testsetup.cfg) as reference. Set all mandatory values.
 #H Then use below steps in your scripts
 #H
 #H
@@ -104,16 +106,31 @@ _automux_panescfg()
 #H source <automux.sh>
 #H ```
 #H
-#H Start using provided functions as per the need. All exec functions support multiple commands to 
-#H execute on a pane, take test.sh as a reference
+#H Its mandatory to source `automux.sh` in all scripts.
+#H
+#H Now you can call any of the below functions. `automux_*_exec_*` functions support multiple commands
+#H as inputs which gets executed on any pane, take [test.sh](test.sh) as a reference
+#H
 
+#H
 #H ## Automux Onetime functions
+#H
 
+#H
 #H ### automux_init
 #H
-#H Very first function to call to enable automux infra and dont use it multiple times.
-#H If you have multiple scripts to execute using this have a init script with this function
-#H and source it, then you can use all scripts. its mandatory to source automux.sh in all scripts.
+#H This API enables automux infra and opens all the panes as per the config.
+#H
+
+#H
+#H > Dont use it multiple times.
+#H > This must be first function to call before calling any `automux_*` APIs
+#H
+
+#H
+#H Calling this in an init script and souring it would be suggested if you have multiple scripts to
+#H run using automux. This way all the config params are exported to environment to reuse.
+#H
 automux_init()
 {
     export SNAME=$(tmux display-message -p "#S")
@@ -136,11 +153,12 @@ automux_init()
     export AUTOMUX_TEMPFILE=$(mktemp)
 }
 
+#H
 #H ### automux_clean
 #H
-#H Closes all opened panes, cleans all temporary files created by automux, run this after 
-#H completing everything. As it closes every pane abruptly, close all open connections in panes
-#H before calling this function
+#H Closes all opened panes, cleans all temporary files created by automux, run this at last after 
+#H completing everything. As it closes every pane abruptly, its upto user to kill processes or close
+#H all open connections in any panes before calling this function
 automux_clean()
 {
     rm -rf /tmp/automux_* 
@@ -157,10 +175,11 @@ automux_clean()
 
 #H ### automux_on
 #H
-#H Use this function to change effective pane to execute all following automux functions
+#H Use this function to change active pane, all following automux functions runs commands on the
+#H selected pane using this function
 #H
 #H > Params
-#H > - $1 - pane name this should be the one from config PANES
+#H > - $1 - pane name this should be the one from configuration variable PANES
 automux_on()
 {
     if [ "$1" == "" ] 
@@ -186,14 +205,31 @@ automux_on()
     _automux_prdbg "$CURPANE"
 }
 
-#H ## Automux command executor functions
+#H ## Naming convention of APIs
+
+#H Keywords in APIs and their meaning
+#H
+#H |Keyword| Description|
+#H |---|---|
+#H |`wait` | These APIs uses the given delay in between |
+#H |`out` | These APIs dump output of commands on console |
+#H |`expect` | These APIs run the given commands and expect given string in output |
+#H |`bg` | These APIs run the given commands in background |
+
+#H ## Automux APIs
+
+#H Below functions runs the commands on PANE selected by `automux_on` API
+#H
+#H All APIs take one or more commands as space separated strings, these commands gets executed on 
+#H selected pane refer [test.sh](test.sh) 
+#H
 
 #H ### automux_exec
 #H
-#H execute given commands on selected pane using automux_on
+#H execute given commands
 #H
 #H > Params
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - List of Command(s) to execute.
 automux_exec()
 {
     local curpane=$CURPANE
@@ -209,11 +245,11 @@ automux_exec()
 
 #H ### automux_exec_wait
 #H
-#H execute given commands on selected pane using automux_on
+#H execute given commands with a given delay in between
 #H
 #H > Params
-#H > - $1 is seconds to wait till the command completes
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - $1 is delay in seconds to use after every command
+#H > - List of Command(s) to execute.
 automux_exec_wait()
 {
     export CURSLEEP=$1
@@ -283,12 +319,14 @@ _automux_exec_expect()
 }
 #H ### automux_exec_expect
 #H
-#H execute given commands on selected pane using automux_on and waits untill expected string is 
+#H execute given commands and waits untill expected string is 
 #H obtained on last line of the output
 #H
+#H NOTE: Use this when the given string is exact match at the end of output
+#H
 #H > Params
-#H > - $1 is expect string we wait till it founds on selected pane
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - $1 is expected string at the last line of the output
+#H > - List of Command(s) to execute.
 automux_exec_expect()
 {
     _automux_exec_expect N-exactend "$@"
@@ -296,13 +334,16 @@ automux_exec_expect()
 
 #H ### automux_exec_expect_out
 #H
-#H execute given commands on selected pane using automux_on and waits untill expected string is 
+#H execute given commands and waits untill expected string is 
 #H obtained on last line of the output
-#H Also dumps output to current pane
+#H
+#H NOTE: Use this when the given string is exact match at the end of output
+#H
+#H Also dumps output to console
 #H
 #H > Params
-#H > - $1 is expect string we wait till it founds on selected pane
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - $1 is expected string at the last line of the output
+#H > - List of Command(s) to execute.
 automux_exec_expect_out()
 {
     _automux_exec_expect Y-exactend "$@"
@@ -310,10 +351,10 @@ automux_exec_expect_out()
 
 #H ### automux_exec_expect_prompt
 #H
-#H execute given commands on selected pane using automux_on and checks for prompt
+#H execute given commands and waits untill prompt is obtained
 #H
 #H > Params
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - List of Command(s) to execute.
 automux_exec_expect_prompt()
 {
     _automux_exec_expect N-prompt "$@"
@@ -321,11 +362,12 @@ automux_exec_expect_prompt()
 
 #H ### automux_exec_expect_prompt_out
 #H
-#H execute given commands on selected pane using automux_on and checks for prompt 
+#H execute given commands and waits untill prompt is obtained
+#H
 #H Also dumps output to current pane
 #H
 #H > Params
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - List of Command(s) to execute.
 automux_exec_expect_prompt_out()
 {
     _automux_exec_expect Y-prompt "$@"
@@ -333,11 +375,10 @@ automux_exec_expect_prompt_out()
 
 #H ### automux_exec_expect_substr
 #H
-#H execute given commands on selected pane using automux_on and checks for given string 
-#H is present in lastline of output
+#H execute given commands and checks for given string is present at any place in last line of output
 #H
 #H > Params
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - List of Command(s) to execute.
 automux_exec_expect_substr()
 {
     _automux_exec_expect N-substrend "$@"
@@ -345,12 +386,13 @@ automux_exec_expect_substr()
 
 #H ### automux_exec_expect_substr_out
 #H
-#H execute given commands on selected pane using automux_on and checks for given string 
-#H is present in lastline of output
+#H execute given commands and checks for given string is present at any place in last line of output
+#H
 #H Also dumps output to current pane
 #H
 #H > Params
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - $1 is expected string at any place of the last line of the output
+#H > - List of Command(s) to execute.
 automux_exec_expect_substr_out()
 {
     _automux_exec_expect Y-substrend "$@"
@@ -358,11 +400,11 @@ automux_exec_expect_substr_out()
 
 #H ### automux_exec_findstr
 #H
-#H execute given commands on selected pane using automux_on and checks for given string 
-#H is present in lastline of output
+#H execute given commands and waits till given string obtained any where in the output
 #H
 #H > Params
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - $1 is expected string at any place of the last line of the output
+#H > - List of Command(s) to execute.
 automux_exec_findstr()
 {
     _automux_exec_expect N-findlog "$@"
@@ -370,12 +412,13 @@ automux_exec_findstr()
 
 #H ### automux_exec_findstr_out
 #H
-#H execute given commands on selected pane using automux_on and checks for given string 
-#H is present in lastline of output
+#H execute given commands and waits till given string obtained any where in the output
+#H
 #H Also dumps output to current pane
 #H
 #H > Params
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - $1 is expected string at any place of the whole output log
+#H > - List of Command(s) to execute.
 automux_exec_findstr_out()
 {
     _automux_exec_expect Y-findlog "$@"
@@ -383,10 +426,13 @@ automux_exec_findstr_out()
 
 #H ### automux_exec_out
 #H
-#H execute given commands on selected pane using automux_on and dumps output on console
+#H execute given commands and dumps output on console
+#H
+#H NOTE: Output gets printed after execution of all commands
 #H
 #H > Params
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - $1 is expected string at any place of the whole output log
+#H > - List of Command(s) to execute.
 automux_exec_out()
 {
     local curpane=$CURPANE
@@ -408,11 +454,13 @@ automux_exec_out()
 
 #H ### automux_exec_wait_out
 #H
-#H execute given commands on selected pane using automux_on and dumps output on console
+#H execute given commands with the given delay in between, and dumps output on console
+#H
+#H NOTE: Output gets printed after execution of all commands
 #H
 #H > Params
-#H > - $1 sleep between every command
-#H > - Command(s) to execute seperated as strings refer test.sh 
+#H > - $1 is delay in seconds to use after every command
+#H > - List of Command(s) to execute.
 automux_exec_wait_out()
 {
     export CURSLEEP=$1
@@ -422,11 +470,15 @@ automux_exec_wait_out()
 
 #H ### automux_bg_exec_***
 #H
-#H Similar to all exec commands but executes in background
-#H Becarefull while exiting without waiting all invoked bg tasks.
+#H These are background variants of all above APIs
+#H Whick execute given commands in background
+#H Becarefull while exiting without completion of all invoked bg tasks.
+#H
+#H Use `wait` command in any script which uses these APIs. This ensures the completion of all 
+#H background tasks.
 #H
 #H > Params
-#H > - Command(s) to poss to respective exec functions. refert test.sh 
+#H > - List of Command(s) to execute.
 automux_bg_exec()
 {
     automux_exec "$@" &
