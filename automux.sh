@@ -527,3 +527,38 @@ automux_bg_exec_wait_out()
 {
     automux_exec_wait_out "$@" &
 }
+
+#H ### automux_log_dump
+#H
+#H dump the whole console histoy to specified file or stdout
+#H
+#H NOTE: Output gets printed if no params given
+#H
+#H > Params
+#H > - $1 full path to file to store the log
+automux_log_dump()
+{
+    local curpane=$CURPANE
+    local cursleep=$CURSLEEP
+    local curpname=$CURPANENAME
+    local tmpf=$(mktemp -t "automux_${curpname}_XXXXXX")
+    tmux capture-pane -CNp $curpane -S - > $tmpf
+    _automux_postexec
+    echo $1
+    if [ -n "$1" ]; then
+        cp $tmpf $1
+    else
+        cat $tmpf
+    fi
+    rm -rf $tmpf
+}
+
+#H ### automux_log_clear
+#H
+#H clear the console histoy
+automux_log_clear()
+{
+    local curpane=$CURPANE
+    tmux clear-history $curpane
+    _automux_postexec
+}

@@ -241,4 +241,19 @@ automux_exec_findstr "TEST" \
     "echo TEST${LINENO} OK" \
     "echo TEST${LINENO} OK"
 echo "Running TEST at ${LINENO} : "
+
+echo "---------------------------- TEST LOG APIS ------------------------------------"
+automux_on P3
+automux_log_dump
+
+automux_on P5
+automux_log_dump /tmp/atmxtest
+cat /tmp/atmxtest
+rm -rf /tmp/atmxtest
+
+automux_on P7
+automux_log_clear
+
+echo "---------------------------- CLOSE AUTOMUX ------------------------------------"
+sleep 10
 automux_clean

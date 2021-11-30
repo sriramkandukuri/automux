@@ -196,3 +196,16 @@ background tasks.
 
 > Params
 > - List of Command(s) to execute.
+
+### automux_log_dump
+
+dump the whole console histoy to specified file or stdout
+
+NOTE: Output gets printed if no params given
+
+> Params
+> - $1 full path to file to store the log
+
+### automux_log_clear
+
+clear the console histoy
