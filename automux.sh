@@ -7,6 +7,8 @@
 #H 
 #H refer [test.sh](test.sh) for example
 
+SED_CMD="sed -u -e $'s,[\x01-\x1F\x7F][[0-9;]*[a-zA-Z],,g' -e 's,^ ,,g' -e 's/\x0//g'"
+
 _automux_print()
 {
     local idx=2
@@ -243,6 +245,26 @@ automux_exec()
     _automux_postexec
 }
 
+#H ### automux_play_keys
+#H
+#H Send given keys one by one to target pane, usefull for minicom kind consoles
+#H keys must be in tmux compatible format
+#H
+#H > Params
+#H > - List of Keys(s) to execute.
+automux_play_keys()
+{
+    local curpane=$CURPANE
+    local cursleep=$CURSLEEP
+    local _atmx_iter=""
+    for _atmx_iter in "$@"
+    do
+        tmux send-keys $curpane "$_atmx_iter"
+        sleep $cursleep
+    done
+    _automux_postexec
+}
+
 #H ### automux_exec_wait
 #H
 #H execute given commands with a given delay in between
@@ -271,6 +293,7 @@ _automux_exec_expect()
     local curpname=$CURPANENAME
     local tmpf=$(mktemp -t "automux_${curpname}_XXXXXX")
     tmux pipe-pane $curpane "cat >> $tmpf"
+    retrycnt=1000
     
     if [ "$explogic" != "prompt" ];then
         expstr=$1
@@ -278,7 +301,7 @@ _automux_exec_expect()
     else
         tmux send-keys $curpane Enter
         sleep 1
-        expstr=$(tail -1 $tmpf|sed -e 's/\x0//g')
+        expstr=$(tail -1 $tmpf | eval $SED_CMD)
     fi
 
     for _atmx_iter in "$@"
@@ -288,9 +311,13 @@ _automux_exec_expect()
         obtstr=""
         while true
         do
-            obtstr=$(tail -1 $tmpf|sed -e 's/\x0//g')
-            # uncomment below line for debugging
-            # _automux_prdbg "expstr($expstr) obtstr($obtstr)"
+            obtstr=$(tail -1 $tmpf | eval $SED_CMD)
+            retrycnt=`expr $retrycnt - 1`
+
+            if [ $retrycnt -eq 0 ]; then
+                _automux_prerr "expstr($expstr) obtstr($obtstr)"
+                retrycnt=1000
+            fi
             case $explogic in
                 exactend|prompt)
                     if [ "$obtstr" = "$expstr" ]; then
@@ -311,7 +338,7 @@ _automux_exec_expect()
         done
     done
     if [ "$expout" = "Y" ]; then
-        cat $tmpf
+        cat $tmpf | eval $SED_CMD
     fi
     tmux pipe-pane $curpane
     rm -rf $tmpf
@@ -448,7 +475,7 @@ automux_exec_out()
     done
     _automux_postexec
     tmux pipe-pane $curpane
-    cat $tmpf
+    cat $tmpf | eval $SED_CMD
     rm -rf $tmpf
 }
 

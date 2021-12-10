@@ -82,6 +82,14 @@ execute given commands
 > Params
 > - List of Command(s) to execute.
 
+### automux_play_keys
+
+Send given keys one by one to target pane, usefull for minicom kind consoles
+keys must be in tmux compatible format
+
+> Params
+> - List of Keys(s) to execute.
+
 ### automux_exec_wait
 
 execute given commands with a given delay in between

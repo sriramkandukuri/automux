@@ -241,6 +241,17 @@ automux_exec_findstr "TEST" \
     "echo TEST${LINENO} OK" \
     "echo TEST${LINENO} OK"
 echo "Running TEST at ${LINENO} : "
+automux_on P4
+automux_exec "bash" \
+    "bash" \
+    "bash" \
+    "bash"
+automux_play_keys "C-d" \
+    "C-d" \
+    "C-d" \
+    "C-d"
+
+echo "Running TEST at ${LINENO} : "
 
 echo "---------------------------- TEST LOG APIS ------------------------------------"
 automux_on P3
