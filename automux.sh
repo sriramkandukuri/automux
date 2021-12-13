@@ -314,10 +314,10 @@ _automux_exec_expect()
             obtstr=$(tail -1 $tmpf | eval $SED_CMD)
             retrycnt=`expr $retrycnt - 1`
 
-            if [ $retrycnt -eq 0 ]; then
-                _automux_prerr "expstr($expstr) obtstr($obtstr)"
-                retrycnt=1000
-            fi
+            # if [ $retrycnt -eq 0 ]; then
+            #     _automux_prerr "expstr($expstr) obtstr($obtstr)"
+            #     retrycnt=1000
+            # fi
             case $explogic in
                 exactend|prompt)
                     if [ "$obtstr" = "$expstr" ]; then
