@@ -7,7 +7,7 @@
 #H 
 #H refer [test.sh](test.sh) for example
 
-SED_CMD="sed -u -e $'s,[\x01-\x1F\x7F][[0-9;]*[a-zA-Z],,g' -e 's,^ ,,g' -e 's/\x0//g'"
+SED_CMD="sed -u -e $'s,[\x01-\x1F\x7F][[0-9;]*[a-zA-Z],,g' -e 's/\x0//g'"
 
 _automux_print()
 {
